@@ -12,6 +12,11 @@ const routes = [
     component: HomeView,
   },
   {
+    path: "/home",
+    name: "home",
+    component: HomeView,
+  },
+  {
     path: "/login",
     name: "login",
     component: LoginView,
