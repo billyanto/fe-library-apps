@@ -1,7 +1,7 @@
 <template>
   <div class="login">
     <HeaderNav/>
-    <div class="w-50 border rounded mt-4 mx-auto">
+    <div class="w-25 border rounded mt-4 mx-auto">
 
       <div class="p-3">
         <img

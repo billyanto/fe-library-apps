@@ -14,7 +14,7 @@ Vue.config.productionTip = false
 import "bootstrap/dist/css/bootstrap.css";
 import "bootstrap-vue/dist/bootstrap-vue.css";
 import "vue-toast-notification/dist/theme-bootstrap.css";
-
+axios.defaults.baseURL = process.env.VUE_APP_API_URL;
 library.add(fas);
 Vue.use(BootstrapVue);
 Vue.use(VueAxios, axios);
