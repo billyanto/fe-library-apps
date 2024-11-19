@@ -1,5 +1,5 @@
 <template>
-  <div class="fixed-bottom text-center">
+  <div class="fixed-bottom text-center border-top ">
     <span>Perpustakaan Online Copyright 2024</span>
   </div>
 </template>
