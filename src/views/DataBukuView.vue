@@ -4,7 +4,7 @@
     <div class="p-4">
       <h2>Data Buku</h2>
       <div class="d-flex">
-        <div class="me-auto">
+        <div class="mr-auto">
           <div class="input-group mb-3">
             <span class="input-group-text">
               <fa-icon icon="magnifying-glass" />
@@ -12,7 +12,7 @@
             <input type="text" v-model="searchQuery" class="form-control" />
           </div>
         </div>
-        <div class="btn btn-secondary h-50">input Buku</div>
+        <b-button v-b-modal.modal-input-buku class="h-50">input Buku</b-button>
       </div>
       <b-table
         id="my-table"
@@ -57,6 +57,146 @@
       </div>
     </div>
 
+    <b-modal
+      id="modal-input-buku"
+      size="lg"
+      title="Input Buku"
+      @show="resetModal"
+      @hidden="resetModal"
+      @ok="handleInputBuku"
+    >
+
+      <form ref="form" @submit.stop.prevent="handleSubmit">
+        <b-form-group
+          label="Judul Buku"
+          label-for="judul-buku"
+          invalid-feedback="Judul Buku is required"
+          :state="judulBukuState"
+        >
+          <b-form-input
+            id="judul-buku"
+            v-model="judulBuku"
+            :state="judulBukuState"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Penulis"
+          label-for="penulis"
+          invalid-feedback="Penulis Buku is required"
+          :state="penulisState"
+        >
+          <b-form-input
+            id="penulis"
+            v-model="penulis"
+            :state="penulisState"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Tahun Terbit"
+          label-for="tahun-terbit"
+          invalid-feedback="Tahun Terbit Buku is required"
+          :state="tahunTerbitState"
+        >
+          <b-form-input
+            id="tahun-terbit"
+            v-model="tahunTerbit"
+            :state="tahunTerbitState"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Penerbit"
+          label-for="penerbit"
+          invalid-feedback="Penerbit Buku is required"
+          :state="penerbitState"
+        >
+          <b-form-input
+            id="penerbit"
+            v-model="penerbit"
+            :state="penerbitState"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Jenis Buku"
+          label-for="jenis-buku"
+          invalid-feedback="Jenis Buku is required"
+          :state="jenisBukuState"
+        >
+          <b-form-select
+            id="jenis-buku"
+            v-model="jenisBuku"
+            :state="jenisBukuState"
+            required
+            :options="jenisBukuOptions"
+          ></b-form-select>
+        </b-form-group>
+        <b-form-group
+          label="Tanggal Input Buku"
+          label-for="tanggal-input-buku"
+          invalid-feedback="Tanggal Input Buku is required"
+          :state="tanggalInputBukuState"
+        >
+          <b-form-input
+            id="tanggal-input-buku"
+            v-model="tanggalInputBuku"
+            :state="tanggalInputBukuState"
+            :type="'date'"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Sumber Buku"
+          label-for="sumber-buku"
+          invalid-feedback="Sumber Buku is required"
+          :state="sumberBukuState"
+        >
+          <b-form-input
+            id="sumber-buku"
+            v-model="sumberBuku"
+            :state="sumberBukuState"
+            required
+          ></b-form-input>
+        </b-form-group>
+        <b-form-group
+          label="Buku Lama"
+          invalid-feedback="Buku Lama is required"
+          v-slot="{ ariaDescribedby }"
+        >
+          <b-form-radio
+            v-model="bukuLama"
+            :aria-describedby="ariaDescribedby"
+            name="buku-lama"
+            value="true"
+            >Ya</b-form-radio
+          >
+          <b-form-radio
+            v-model="bukuLama"
+            :aria-describedby="ariaDescribedby"
+            name="buku-lama"
+            value="false"
+            >Tidak</b-form-radio
+          >
+        </b-form-group>
+        <b-form-group
+          label="Rak Buku"
+          label-for="rak-buku"
+          invalid-feedback="Rak Buku is required"
+          :state="rakBukuState"
+        >
+          <b-form-select
+            id="rak-buku"
+            v-model="rakBuku"
+            :state="rakBukuState"
+            required
+            :options="rakBukuOptions"
+          ></b-form-select>
+        </b-form-group>
+      </form>
+    </b-modal>
+
     <FooterPage />
   </div>
 </template>
@@ -69,6 +209,24 @@ export default {
   name: "DataBukuView",
   data() {
     return {
+      judulBuku: "",
+      judulBukuState: null,
+      penulis: "",
+      penulisState: null,
+      tahunTerbit: "",
+      tahunTerbitState: null,
+      penerbit: "",
+      penerbitState: null,
+      jenisBuku: "",
+      jenisBukuState: null,
+      tanggalInputBuku: null,
+      tanggalInputBukuState: null,
+      sumberBuku: null,
+      sumberBukuState: null,
+      bukuLama: null,
+      rakBuku: "",
+      rakBukuState: null,
+      submittedNames: [],
       searchQuery: "",
       perPage: 5,
       currentPage: 1,
@@ -83,6 +241,8 @@ export default {
         },
         { key: "action", label: "Actions", thClass: "bg-secondary text-white" },
       ],
+      rakBukuOptions: [],
+      jenisBukuOptions: [],
       MasterItems: [],
       items: [],
     };
@@ -105,6 +265,8 @@ export default {
     },
   },
   mounted() {
+    this.getDataCategoryBuku();
+    this.getDataRakBuku();
     this.getDataBuku();
   },
   methods: {
@@ -117,8 +279,74 @@ export default {
         })
         .catch((error) => console.log(error));
     },
+    getDataCategoryBuku: function () {
+      axios
+        .get("/category")
+        .then((response) => {
+          let bookCategories = [];
+          response.data.forEach((element) =>
+            bookCategories.push({ value: element.id, text: element.name })
+          );
+          this.jenisBukuOptions = bookCategories;
+        })
+        .catch((error) => console.log(error));
+    },
+    getDataRakBuku: function () {
+      axios
+        .get("/bookshelf")
+        .then((response) => {
+          let rakbukuDatas = [];
+          response.data.forEach((element) =>
+            rakbukuDatas.push({ value: element.id, text: element.name })
+          );
+          this.rakBukuOptions = rakbukuDatas;
+        })
+        .catch((error) => console.log(error));
+    },
     deleteData: function (id) {
       console.log(id);
+    },
+    handleInputBuku(bvModalEvent) {
+      // Prevent modal from closing
+      bvModalEvent.preventDefault();
+      // Trigger submit handler
+      this.handleSubmit();
+    },
+    handleSubmit: function () {
+      // Exit when the form isn't valid
+      if (!this.checkFormValidity()) {
+        return;
+      }
+      // Push the name to submitted names
+      this.submittedNames.push(this.name);
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide("modal-prevent-closing");
+      });
+    },
+    checkFormValidity: function () {
+      const valid = this.$refs.form.checkValidity();
+      this.nameState = valid;
+      return valid;
+    },
+    resetModal: function () {
+      this.judulBuku = "";
+      this.judulBukuState = null;
+      this.penulis = "";
+      this.penulisState = null;
+      this.tahunTerbit = "";
+      this.tahunTerbitState = null;
+      this.penerbit = "";
+      this.penerbitState = null;
+      this.jenisBuku = "";
+      this.jenisBukuState = null;
+      this.tanggalInputBuku = "";
+      this.tanggalInputBukuState = null;
+      this.sumberBuku = "";
+      this.sumberBukuState = null;
+      this.bukuLama = null;
+      this.rakBuku = "";
+      this.rakBukuState = null;
     },
   },
 };

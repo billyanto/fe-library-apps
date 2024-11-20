@@ -1,10 +1,10 @@
 <template>
-  <div class="d-flex p-2 w-100 bg-light">
-    <h4 class="me-auto pointer" href="#/home">Perpustakaan Online</h4>
+  <div class="d-flex p-2 w-100 bg-light pr-2 pl-2">
+    <RouterLink class="text-dark h4 my-auto mr-auto" to="/">Perpustakaan Online</RouterLink>
     <div v-if="currentRouteName !== 'login'">
-      <RouterLink to="/data-buku">Data Buku</RouterLink>
-      <a class="ms-2 pointer" href="#/about">Transaksi</a>
-      <a class="ms-2 pointer" @click="logout">Logout</a>
+      <RouterLink class="my-auto ml-2" to="/data-buku">Data Buku</RouterLink>
+      <RouterLink class="my-auto ml-2" to="/data-buku">Transaksi</RouterLink>
+      <a class="ml-2 pointer my-auto" @click="logout">Logout</a>
     </div>
     <div v-if="currentRouteName == 'login'">
       <a class="ms-2 pointer">Login</a>
