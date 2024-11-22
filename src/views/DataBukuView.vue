@@ -65,7 +65,6 @@
       @hidden="resetModal"
       @ok="handleInputBuku"
     >
-
       <form ref="form" @submit.stop.prevent="handleSubmit">
         <b-form-group
           label="Judul Buku"
@@ -100,6 +99,7 @@
           :state="tahunTerbitState"
         >
           <b-form-input
+            @keypress="isNumber($event)"
             id="tahun-terbit"
             v-model="tahunTerbit"
             :state="tahunTerbitState"
@@ -164,11 +164,13 @@
           label="Buku Lama"
           invalid-feedback="Buku Lama is required"
           v-slot="{ ariaDescribedby }"
+          :state="bukuLamaState"
         >
           <b-form-radio
             v-model="bukuLama"
             :aria-describedby="ariaDescribedby"
             name="buku-lama"
+            :state="bukuLamaState"
             value="true"
             >Ya</b-form-radio
           >
@@ -204,6 +206,7 @@
 import HeaderNavigation from "@/components/HeaderNav.vue";
 import FooterPage from "@/components/FooterPage.vue";
 import axios from "axios";
+import moment from 'moment';
 
 export default {
   name: "DataBukuView",
@@ -224,6 +227,7 @@ export default {
       sumberBuku: null,
       sumberBukuState: null,
       bukuLama: null,
+      bukuLamaState: null,
       rakBuku: "",
       rakBukuState: null,
       submittedNames: [],
@@ -270,6 +274,19 @@ export default {
     this.getDataBuku();
   },
   methods: {
+    isNumber: function (evt) {
+      evt = evt ? evt : window.event;
+      var charCode = evt.which ? evt.which : evt.keyCode;
+      if (
+        charCode > 31 &&
+        (charCode < 48 || charCode > 57) &&
+        charCode !== 46
+      ) {
+        evt.preventDefault();
+      } else {
+        return true;
+      }
+    },
     getDataBuku: function () {
       axios
         .get("/book/all-books")
@@ -317,16 +334,63 @@ export default {
       if (!this.checkFormValidity()) {
         return;
       }
+
+      const payload = {
+        title: this.judulBuku,
+        author: this.penulis,
+        publisher: this.penerbit,
+        publication_year: this.tahunTerbit,
+        category_id: this.jenisBuku,
+        date_added: moment(String(this.tanggalInputBuku)).format('MM-DD-YYYY'),
+        old_book: this.bukuLama,
+        source: this.sumberBuku,
+        status: "Available",
+        bookshelf_id: this.rakBuku,
+      };
       // Push the name to submitted names
-      this.submittedNames.push(this.name);
+      axios
+        .post("/book/insert-book", payload)
+        .then(() => {
+          this.$toast.success("Input sucess");
+          this.$nextTick(() => {
+            this.$bvModal.hide("modal-input-buku");
+          });
+        })
+        .catch((error) => this.$toast.error(error.msg));
       // Hide the modal manually
-      this.$nextTick(() => {
-        this.$bvModal.hide("modal-prevent-closing");
-      });
     },
     checkFormValidity: function () {
       const valid = this.$refs.form.checkValidity();
-      this.nameState = valid;
+      if (!valid) {
+        if (!this.judulBuku) {
+          this.judulBukuState = false;
+        }
+        if (!this.penulis) {
+          this.penulisState = false;
+        }
+        if (!this.tahunTerbit) {
+          this.tahunTerbitState = false;
+        }
+        if (!this.penerbit) {
+          this.penerbitState = false;
+        }
+        if (!this.jenisBuku) {
+          this.jenisBukuState = false;
+        }
+        if (!this.tanggalInputBuku) {
+          this.tanggalInputBukuState = false;
+        }
+        if (!this.sumberBuku) {
+          this.sumberBukuState = false;
+        }
+        if (!this.bukuLama) {
+          this.bukuLamaState = false;
+        }
+        if (!this.rakBuku) {
+          this.rakBukuState = false;
+        }
+      }
+
       return valid;
     },
     resetModal: function () {
@@ -345,6 +409,7 @@ export default {
       this.sumberBuku = "";
       this.sumberBukuState = null;
       this.bukuLama = null;
+      this.bukuLamaState = null;
       this.rakBuku = "";
       this.rakBukuState = null;
     },
