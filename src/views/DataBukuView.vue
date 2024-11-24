@@ -12,7 +12,12 @@
             <input type="text" v-model="searchQuery" class="form-control" />
           </div>
         </div>
-        <b-button v-b-modal.modal-input-buku class="h-50">input Buku</b-button>
+        <b-button
+          v-b-modal.modal-input-buku
+          class="h-50"
+          @click="showModal('input')"
+          >input Buku</b-button
+        >
       </div>
       <b-table
         id="my-table"
@@ -25,21 +30,21 @@
         <template #cell(action)="data">
           <button
             type="button"
-            @click="deleteData(data.item.id)"
+            @click="modalDetail(data.item.id)"
             class="btn btn-link"
           >
             Detail
           </button>
           <button
             type="button"
-            @click="deleteData(data.item.id)"
+            @click="modalEditData(data.item.id)"
             class="btn btn-link"
           >
             Edit
           </button>
           <button
             type="button"
-            @click="deleteData(data.item.id)"
+            @click="showDeleteMsgBox(data.item.id, data.item.title)"
             class="btn btn-link"
           >
             Delete
@@ -47,7 +52,7 @@
         </template></b-table
       >
       <div class="d-flex">
-        <p class="mt-3 me-auto">Current Page: {{ currentPage }}</p>
+        <p class="mt-3 mr-auto">Current Page: {{ currentPage }}</p>
         <b-pagination
           v-model="currentPage"
           :total-rows="rows"
@@ -57,14 +62,24 @@
       </div>
     </div>
 
-    <b-modal
-      id="modal-input-buku"
-      size="lg"
-      title="Input Buku"
-      @show="resetModal"
-      @hidden="resetModal"
-      @ok="handleInputBuku"
-    >
+    <b-modal ref="modal-input-buku" size="lg" title="Input Buku">
+      <div class="d-flex" v-if="modalType == 'detailModal'">
+        <b-button
+          variant="primary"
+          size="sm"
+          class="mr-1"
+          @click="changeToEditModal()"
+        >
+          Edit
+        </b-button>
+        <b-button
+          variant="secondary"
+          size="sm"
+          @click="showDeleteMsgBox(bookId, judulBuku)"
+        >
+          Hapus
+        </b-button>
+      </div>
       <form ref="form" @submit.stop.prevent="handleSubmit">
         <b-form-group
           label="Judul Buku"
@@ -76,6 +91,7 @@
             id="judul-buku"
             v-model="judulBuku"
             :state="judulBukuState"
+            :disabled="modalType == 'detailModal'"
             required
           ></b-form-input>
         </b-form-group>
@@ -89,6 +105,7 @@
             id="penulis"
             v-model="penulis"
             :state="penulisState"
+            :disabled="modalType == 'detailModal'"
             required
           ></b-form-input>
         </b-form-group>
@@ -103,6 +120,7 @@
             id="tahun-terbit"
             v-model="tahunTerbit"
             :state="tahunTerbitState"
+            :disabled="modalType == 'detailModal'"
             required
           ></b-form-input>
         </b-form-group>
@@ -116,6 +134,7 @@
             id="penerbit"
             v-model="penerbit"
             :state="penerbitState"
+            :disabled="modalType == 'detailModal'"
             required
           ></b-form-input>
         </b-form-group>
@@ -129,6 +148,7 @@
             id="jenis-buku"
             v-model="jenisBuku"
             :state="jenisBukuState"
+            :disabled="modalType == 'detailModal'"
             required
             :options="jenisBukuOptions"
           ></b-form-select>
@@ -143,6 +163,7 @@
             id="tanggal-input-buku"
             v-model="tanggalInputBuku"
             :state="tanggalInputBukuState"
+            :disabled="modalType == 'detailModal'"
             :type="'date'"
             required
           ></b-form-input>
@@ -157,6 +178,7 @@
             id="sumber-buku"
             v-model="sumberBuku"
             :state="sumberBukuState"
+            :disabled="modalType == 'detailModal'"
             required
           ></b-form-input>
         </b-form-group>
@@ -171,6 +193,7 @@
             :aria-describedby="ariaDescribedby"
             name="buku-lama"
             :state="bukuLamaState"
+            :disabled="modalType == 'detailModal'"
             value="true"
             >Ya</b-form-radio
           >
@@ -179,6 +202,7 @@
             :aria-describedby="ariaDescribedby"
             name="buku-lama"
             value="false"
+            :disabled="modalType == 'detailModal'"
             >Tidak</b-form-radio
           >
         </b-form-group>
@@ -192,11 +216,36 @@
             id="rak-buku"
             v-model="rakBuku"
             :state="rakBukuState"
+            :disabled="modalType == 'detailModal'"
             required
             :options="rakBukuOptions"
           ></b-form-select>
         </b-form-group>
       </form>
+      <template #modal-footer>
+        <div class="d-flex justify-content-end">
+          <b-button
+            v-if="modalType == 'inputModal'"
+            variant="primary"
+            size="sm"
+            class="mr-1"
+            @click="handleInputBuku"
+          >
+            Save
+          </b-button>
+          <b-button
+            v-if="modalType == 'editModal'"
+            variant="primary"
+            size="sm"
+            class="mr-1"
+          >
+            Update
+          </b-button>
+          <b-button variant="secondary" size="sm" @click="show = false">
+            Close
+          </b-button>
+        </div>
+      </template>
     </b-modal>
 
     <FooterPage />
@@ -206,12 +255,14 @@
 import HeaderNavigation from "@/components/HeaderNav.vue";
 import FooterPage from "@/components/FooterPage.vue";
 import axios from "axios";
-import moment from 'moment';
+import moment from "moment";
 
 export default {
   name: "DataBukuView",
   data() {
     return {
+      modalType: null,
+      bookId: null,
       judulBuku: "",
       judulBukuState: null,
       penulis: "",
@@ -274,6 +325,27 @@ export default {
     this.getDataBuku();
   },
   methods: {
+    showModal(modalAccess) {
+      if (modalAccess == "input") {
+        this.resetModal();
+        this.modalType = "inputModal";
+        this.$refs["modal-input-buku"].show();
+      } else if (modalAccess == "detail") {
+        this.modalType = "detailModal";
+        this.$refs["modal-input-buku"].show();
+      } else if (modalAccess == "edit") {
+        this.modalType = "editModal";
+        this.$refs["modal-input-buku"].show();
+      }
+    },
+    changeToEditModal() {
+      this.modalType = "editModal";
+    },
+    hideModal() {
+      this.resetModal();
+      this.modalType = null;
+      this.$refs["modal-input-buku"].hide();
+    },
     isNumber: function (evt) {
       evt = evt ? evt : window.event;
       var charCode = evt.which ? evt.which : evt.keyCode;
@@ -320,8 +392,67 @@ export default {
         })
         .catch((error) => console.log(error));
     },
+    getDetailData: function (id) {
+      axios
+        .get("/book/detail-book/" + id)
+        .then((response) => {
+          this.bookId = response.data.id;
+          this.judulBuku = response.data.title;
+          this.penulis = response.data.author;
+          this.penerbit = response.data.publisher;
+          this.tahunTerbit = response.data.publication_year;
+          this.jenisBuku = response.data.category_id;
+          this.tanggalInputBuku = moment(
+            String(response.data.date_added)
+          ).format("MM/DD/YYYY");
+          this.bukuLama = response.data.old_book == "yes";
+          this.sumberBuku = response.data.source;
+          this.status = response.data.status;
+          this.rakBuku = response.data.bookshelf_id;
+        })
+        .catch((error) => console.log(error));
+    },
+    modalDetail: function (id) {
+      this.getDetailData(id);
+      this.showModal("detail");
+    },
+    showDeleteMsgBox(id, title) {
+      this.boxTwo = "";
+      this.$bvModal
+        .msgBoxConfirm("Buku dengan judul " + title + " akan di hapus", {
+          title: "Apakah Kamu Yakin Untuk Hapus Buku",
+          size: "lg",
+          buttonSize: "sm",
+          okVariant: "danger",
+          okTitle: "YES",
+          cancelTitle: "NO",
+          footerClass: "p-2",
+          hideHeaderClose: false,
+          centered: true,
+        })
+        .then((value) => {
+          if (value) {
+            this.deleteData(id);
+          }
+        })
+        .catch((err) => {
+          this.$toast.error(err);
+          // An error occurred
+        });
+    },
+    modalEditData(id) {
+      this.getDetailData(id);
+      this.showModal("edit");
+    },
     deleteData: function (id) {
-      console.log(id);
+      axios
+        .get("/book/delete-book/" + id)
+        .then(() => {
+          this.$toast.success("Delete sucess");
+          this.hideModal();
+          this.getDataBuku();
+        })
+        .catch((error) => this.$toast.error(error));
     },
     handleInputBuku(bvModalEvent) {
       // Prevent modal from closing
@@ -341,7 +472,7 @@ export default {
         publisher: this.penerbit,
         publication_year: this.tahunTerbit,
         category_id: this.jenisBuku,
-        date_added: moment(String(this.tanggalInputBuku)).format('MM-DD-YYYY'),
+        date_added: moment(String(this.tanggalInputBuku)).format("MM-DD-YYYY"),
         old_book: this.bukuLama,
         source: this.sumberBuku,
         status: "Available",
@@ -352,8 +483,9 @@ export default {
         .post("/book/insert-book", payload)
         .then(() => {
           this.$toast.success("Input sucess");
+          this.resetModal();
           this.$nextTick(() => {
-            this.$bvModal.hide("modal-input-buku");
+            this.hideModal();
           });
         })
         .catch((error) => this.$toast.error(error.msg));
